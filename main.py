@@ -252,7 +252,7 @@ def render_home():
         '<div class="section-heading">اختر القسم</div>', unsafe_allow_html=True
     )
 
-    _, center, _ = st.columns([1, 3, 1])
+    _, center, _ = st.columns([1, 2, 1])
     with center:
         col1, col2, col3 = st.columns(3, gap="small")
         with col1:
@@ -335,9 +335,9 @@ def render_quran():
 
 
 # ==========================================
-# 4. قسم عداد التسبيح (مُعاد كتابته بشكل مسطح لمنع خطأ المسافات)
+# 4. قسم العداد الجديد (تم تغيير الاسم والصياغة بالكامل لكسر كاش السيرفر)
 # ==========================================
-def render_tasbeeh():
+def render_new_counter():
     render_back_button("tasbeeh_back")
     st.markdown(
         '<div class="section-heading">عداد التسبيح</div>', unsafe_allow_html=True
@@ -348,14 +348,14 @@ def render_tasbeeh():
         unsafe_allow_html=True,
     )
 
-    _, col_center, _ = st.columns([1, 2, 1])
-    btn_col1, btn_col2 = col_center.columns(2)
+    # توزيع الأزرار بشكل عرضي بسيط جداً بدون متداخلات معقدة
+    col_left, col_right = st.columns(2)
     
-    if btn_col1.button("➕\nاضغط", key="click_tasbeeh"):
+    if col_left.button("➕ زيادة", key="btn_inc_count"):
         st.session_state.tasbeeh_count += 1
         st.rerun()
         
-    if btn_col2.button("🔄\nتصفير", key="reset_tasbeeh"):
+    if col_right.button("🔄 تصفير", key="btn_rst_count"):
         st.session_state.tasbeeh_count = 0
         st.rerun()
 
@@ -370,4 +370,4 @@ elif st.session_state.page == "azkar":
 elif st.session_state.page == "quran":
     render_quran()
 elif st.session_state.page == "tasbeeh":
-    render_tasbeeh()
+    render_new_counter()
