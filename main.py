@@ -16,7 +16,7 @@ st.set_page_config(
 API_BASE = "https://alquran.cloud"
 
 # ==========================================
-# العلامة المائية (محدثة بلون ذهبي ساطع ليناسب الوضع الليلي)
+# العلامة المائية
 # ==========================================
 watermark_svg = """
 <svg xmlns="http://w3.org"
@@ -43,12 +43,11 @@ watermark_svg = """
 svg_encoded = base64.b64encode(watermark_svg.encode("utf-8")).decode("utf-8")
 
 # ==========================================
-# التصميم والـ CSS (محدث بالكامل للوضع الليلي)
+# التصميم والـ CSS
 # ==========================================
 st.markdown(
     f"""
     <style>
-    /* تغيير خلفية التطبيق للون داكن مريح */
     .stApp {{
         background-color: #122419 !important;
         background-image: url(
@@ -71,7 +70,6 @@ st.markdown(
         padding-bottom: 3rem;
     }}
 
-    /* ألوان العناوين باللون الذهبي والبيج الساطع */
     .app-title {{
         text-align: center;
         font-size: 2.5rem;
@@ -95,7 +93,6 @@ st.markdown(
         margin: 0.7rem 0 1rem 0;
     }}
 
-    /* الأزرار الدائرية - ألوان ليلية متناسقة */
     div.stButton > button {{
         border-radius: 50%;
         width: 105px;
@@ -119,12 +116,10 @@ st.markdown(
         color: #fff;
     }}
 
-    /* تقليل المسافة بين أعمدة الأيقونات */
     [data-testid="stHorizontalBlock"] {{
         gap: 0.35rem !important;
     }}
 
-    /* نصوص القرآن الكريم بخلفية داكنة ونصوص فاتحة */
     .quran-text {{
         direction: rtl;
         text-align: justify;
@@ -138,7 +133,6 @@ st.markdown(
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }}
 
-    /* بطاقات الأذكار بالوضع الليلي */
     .zekr-card {{
         direction: rtl;
         text-align: right;
@@ -157,7 +151,6 @@ st.markdown(
         color: #e6c673;
     }}
 
-    /* عداد التسبيح الليلي */
     .tasbeeh-count {{
         text-align: center;
         font-size: 3.5rem;
@@ -167,7 +160,6 @@ st.markdown(
         text-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }}
 
-    /* تعديل عناصر القوائم المنسدلة الافتراضية لتبدو أفضل */
     .stSelectbox label {{
         color: #e6c673 !important;
     }}
@@ -197,7 +189,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 
 # ==========================================
 # بيانات القرآن الكريم
@@ -263,7 +254,7 @@ def render_home():
 
     _, center, _ = st.columns([1, 3, 1])
     with center:
-        col1, col2, col3 = st.columns([1, 1, 1], gap="small")
+        col1, col2, col3 = st.columns(3, gap="small")
         with col1:
             if st.button("📿\nالأذكار", key="home_azkar"):
                 go_to("azkar")
@@ -359,9 +350,23 @@ def render_tasbeeh():
             unsafe_allow_html=True,
         )
 
-        btn_col1, btn_col2 = st.columns([1, 1])
+        btn_col1, btn_col2 = st.columns(2)
         with btn_col1:
             if st.button("➕\nاضغط", key="click_tasbeeh"):
                 st.session_state.tasbeeh_count += 1
                 st.rerun()
         with btn_col2:
+            if st.button("🔄\nتصفير", key="reset_tasbeeh"):
+                st.session_state.tasbeeh_count = 0
+                st.rerun()
+
+
+# ==========================================
+# منطق توجيه الصفحات
+# ==========================================
+if st.session_state.page == "home":
+    render_home()
+elif st.session_state.page == "azkar":
+    render_azkar()
+elif st.session_state.page == "quran":
+    render_quran()
