@@ -3,59 +3,118 @@ import streamlit as st
 import requests
 import math
 
+# =====================================
+# إعدادات التطبيق
+# =====================================
+
 st.set_page_config(
     page_title="حصن المسلم",
     page_icon="📿",
     layout="wide",
 )
 
-# ----------------------------
-# إعدادات التطبيق
-# ----------------------------
+# =====================================
+# التصميم: ذهبي وأبيض
+# =====================================
 
 st.markdown("""
 <style>
     .stApp {
+        background-color: #ffffff;
+        color: #333333;
         direction: rtl;
         text-align: right;
     }
+
+    [data-testid="stHeader"] {
+        background-color: #ffffff;
+    }
+
+    [data-testid="stSidebar"] {
+        background-color: #fffdf5;
+    }
+
     .main-title {
         text-align: center;
-        font-size: 36px;
+        font-size: 38px;
         font-weight: bold;
-        color: #16856b;
+        color: #b8860b;
+        margin-top: 10px;
         margin-bottom: 10px;
     }
+
     .subtitle {
         text-align: center;
         font-size: 18px;
+        color: #8a6d1d;
         margin-bottom: 25px;
     }
-    .ayah-card {
-        background-color: rgba(100, 150, 120, 0.10);
-        padding: 18px;
-        border-radius: 12px;
-        margin: 10px 0;
-        font-size: 23px;
-        line-height: 2;
+
+    .gold-card {
+        background-color: #fffdf5;
+        border: 2px solid #d4af37;
+        border-radius: 16px;
+        padding: 20px;
+        margin: 12px 0;
         text-align: center;
+        box-shadow: 0 3px 10px rgba(184, 134, 11, 0.10);
     }
-    .zikr-card {
-        background-color: rgba(100, 150, 120, 0.10);
+
+    .ayah-card, .zikr-card {
+        background-color: #ffffff;
+        color: #333333;
         padding: 22px;
-        border-radius: 12px;
-        margin: 15px 0;
+        border: 1px solid #d4af37;
+        border-radius: 14px;
+        margin: 12px 0;
         font-size: 23px;
         line-height: 2;
         text-align: center;
+        box-shadow: 0 3px 10px rgba(184, 134, 11, 0.08);
+    }
+
+    h1, h2, h3 {
+        color: #b8860b !important;
+    }
+
+    div.stButton > button {
+        background-color: #d4af37;
+        color: #ffffff;
+        border: 1px solid #b8860b;
+        border-radius: 10px;
+        min-height: 44px;
+        font-weight: bold;
+    }
+
+    div.stButton > button:hover {
+        background-color: #b8860b;
+        color: #ffffff;
+        border: 1px solid #b8860b;
+    }
+
+    div.stButton > button:disabled {
+        background-color: #eee8d5;
+        color: #888888;
+    }
+
+    hr {
+        border-color: #d4af37;
+    }
+
+    [data-testid="stProgressBar"] > div > div {
+        background-color: #d4af37;
+    }
+
+    [data-testid="stMetricValue"] {
+        color: #b8860b;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# ----------------------------
+
+# =====================================
 # الأذكار
-# تقدر تزود الأذكار من هنا
-# ----------------------------
+# =====================================
 
 AZKAR = {
     "أذكار الصباح": [
@@ -106,26 +165,28 @@ AZKAR = {
     ],
 }
 
-# ----------------------------
+
+# =====================================
 # القراء
-# ----------------------------
+# =====================================
 
 READERS = {
     "مشاري العفاسي": "ar.alafasy",
     "محمود خليل الحصري": "ar.husary",
     "محمد صديق المنشاوي": "ar.minshawi",
-    "عبدالرحمن السديس": "ar.sudais",
-    "سعود الشريم": "ar.shuraim",
-    "عبدالباسط عبدالصمد": "ar.abdulbasit",
-    "أحمد العجمي": "ar.ajamy",
+    "عبدالرحمن السديس": "ar.abdurrahmaansudais",
+    "سعود الشريم": "ar.saoodshuraym",
+    "عبدالباسط عبدالصمد": "ar.abdulbasitmurattal",
+    "أحمد العجمي": "ar.ahmedajamy",
     "علي الحذيفي": "ar.hudhaify",
 }
 
-# ----------------------------
-# الحالة المحفوظة
-# ----------------------------
 
-defaults = {
+# =====================================
+# حفظ حالة التطبيق
+# =====================================
+
+DEFAULTS = {
     "page": "الرئيسية",
     "zikr_category": "أذكار الصباح",
     "zikr_index": 0,
@@ -133,16 +194,16 @@ defaults = {
     "tasbeeh_count": 0,
     "surah_number": 1,
     "reader_name": "مشاري العفاسي",
-    "quran_page": 1,
 }
 
-for key, value in defaults.items():
+for key, value in DEFAULTS.items():
     if key not in st.session_state:
         st.session_state[key] = value
 
-# ----------------------------
-# جلب بيانات القرآن
-# ----------------------------
+
+# =====================================
+# جلب بيانات القرآن الكريم
+# =====================================
 
 @st.cache_data(ttl=3600)
 def get_surahs():
@@ -151,6 +212,7 @@ def get_surahs():
         timeout=20,
     )
     response.raise_for_status()
+
     result = response.json()
 
     if result.get("code") != 200:
@@ -166,6 +228,7 @@ def get_surah(surah_number):
         timeout=20,
     )
     response.raise_for_status()
+
     result = response.json()
 
     if result.get("code") != 200:
@@ -174,34 +237,47 @@ def get_surah(surah_number):
     return result["data"]
 
 
-# ----------------------------
-# القائمة الرئيسية
-# ----------------------------
+# =====================================
+# عنوان التطبيق
+# =====================================
 
 st.markdown(
     '<div class="main-title">📿 حصن المسلم</div>',
     unsafe_allow_html=True,
 )
+
 st.markdown(
-    '<div class="subtitle">الأذكار والقرآن الكريم والسبحة الإلكترونية</div>',
+    '<div class="subtitle">'
+    'القرآن الكريم • الأذكار • السبحة الإلكترونية'
+    '</div>',
     unsafe_allow_html=True,
 )
 
+st.divider()
+
+
+# =====================================
+# اختيار القارئ من الصفحة الرئيسية
+# =====================================
+
 st.subheader("🎙️ اختار القارئ المفضل")
 
-reader_names = list(READERS.keys())
-
 st.selectbox(
-    "القارئ",
-    reader_names,
+    "قارئ القرآن الكريم",
+    options=list(READERS.keys()),
     key="reader_name",
 )
 
 st.caption(
-    f"القارئ المختار: {st.session_state.reader_name}"
+    f'القارئ المختار: {st.session_state.reader_name}'
 )
 
 st.divider()
+
+
+# =====================================
+# أزرار التنقل
+# =====================================
 
 col1, col2, col3 = st.columns(3)
 
@@ -222,43 +298,47 @@ with col3:
 
 st.divider()
 
-# ----------------------------
+
+# =====================================
 # قسم الأذكار
-# ----------------------------
+# =====================================
 
 if st.session_state.page == "الأذكار":
-    st.header("📿 قسم الأذكار")
 
-    category = st.selectbox(
-        "اختار نوع الأذكار",
-        list(AZKAR.keys()),
-        index=list(AZKAR.keys()).index(
-            st.session_state.zikr_category
-        ),
+    st.header("📿 الأذكار")
+
+    categories = list(AZKAR.keys())
+
+    selected_category = st.selectbox(
+        "اختار قسم الأذكار",
+        categories,
+        index=categories.index(st.session_state.zikr_category),
     )
 
-    if category != st.session_state.zikr_category:
-        st.session_state.zikr_category = category
+    if selected_category != st.session_state.zikr_category:
+        st.session_state.zikr_category = selected_category
         st.session_state.zikr_index = 0
         st.session_state.zikr_count = 0
         st.rerun()
 
-    items = AZKAR[category]
+    items = AZKAR[st.session_state.zikr_category]
+    index = st.session_state.zikr_index
 
-    if st.session_state.zikr_index >= len(items):
-        st.success("أحسنت! خلصت الأذكار الموجودة في القسم ده.")
+    if index >= len(items):
 
-        if st.button("ابدأ الأذكار من جديد"):
+        st.success("أحسنت! انتهيت من الأذكار الموجودة في هذا القسم.")
+
+        if st.button("🔄 ابدأ من جديد", use_container_width=True):
             st.session_state.zikr_index = 0
             st.session_state.zikr_count = 0
             st.rerun()
 
     else:
-        item = items[st.session_state.zikr_index]
+
+        item = items[index]
 
         st.caption(
-            f"الذكر {st.session_state.zikr_index + 1} "
-            f"من {len(items)}"
+            f"الذكر {index + 1} من {len(items)}"
         )
 
         st.markdown(
@@ -276,7 +356,7 @@ if st.session_state.page == "الأذكار":
 
         with col1:
             if st.button(
-                "سبّح ✓",
+                "📿 تسبيح",
                 use_container_width=True,
                 disabled=current >= target,
             ):
@@ -289,12 +369,15 @@ if st.session_state.page == "الأذكار":
                 st.rerun()
 
         with col2:
-            if st.button("الذكر التالي ⏭️", use_container_width=True):
+            if st.button(
+                "⏭️ الذكر التالي",
+                use_container_width=True,
+            ):
                 st.session_state.zikr_index += 1
                 st.session_state.zikr_count = 0
                 st.rerun()
 
-        if st.button("🔄 إعادة الذكر الحالي"):
+        if st.button("إعادة عدّاد الذكر", use_container_width=True):
             st.session_state.zikr_count = 0
             st.rerun()
 
@@ -302,70 +385,70 @@ if st.session_state.page == "الأذكار":
         st.session_state.page = "الرئيسية"
         st.rerun()
 
-# ----------------------------
+
+# =====================================
 # قسم القرآن الكريم
-# ----------------------------
+# =====================================
 
 elif st.session_state.page == "القرآن":
+
     st.header("📖 القرآن الكريم")
 
     try:
         surahs = get_surahs()
 
         surah_options = {
-            f'{s["number"]}. {s["name"]} — {s["englishName"]}': s["number"]
-            for s in surahs
+            f'{surah["number"]}. {surah["name"]}': surah["number"]
+            for surah in surahs
         }
 
-        option_labels = list(surah_options.keys())
-
-        current_label = next(
-            (
-                label
-                for label, number in surah_options.items()
-                if number == st.session_state.surah_number
-            ),
-            option_labels[0],
-        )
+        labels = list(surah_options.keys())
 
         selected_label = st.selectbox(
             "اختار السورة",
-            option_labels,
-            index=option_labels.index(current_label),
+            labels,
+            index=next(
+                (
+                    i for i, label in enumerate(labels)
+                    if surah_options[label] == st.session_state.surah_number
+                ),
+                0,
+            ),
         )
 
         number = surah_options[selected_label]
 
         if number != st.session_state.surah_number:
             st.session_state.surah_number = number
-            st.session_state.quran_page = 1
             st.rerun()
 
         surah = get_surah(number)
 
-        st.subheader(
-            f'{surah["name"]} — {surah["englishName"]}'
-        )
+        st.subheader(surah["name"])
 
         st.caption(
             f'عدد الآيات: {surah["numberOfAyahs"]} | '
             f'رقم السورة: {surah["number"]}'
         )
 
-        # صوت السورة حسب القارئ المختار
+        # مشغل الصوت حسب القارئ المختار
         reader_id = READERS[st.session_state.reader_name]
 
         audio_url = (
-            "https://cdn.islamic.network/quran/audio-surah/"
-            f"128/{reader_id}/{number}.mp3"
+            "https://cdn.islamic.network/quran/audio-surah/128/"
+            f"{reader_id}/{number}.mp3"
         )
 
         st.markdown(
-            f'**🎙️ تلاوة السورة بصوت {st.session_state.reader_name}**'
+            f'**🎧 تلاوة سورة {surah["name"]} '
+            f'بصوت {st.session_state.reader_name}**'
         )
+
         st.audio(audio_url)
 
-        # تقسيم القراءة إلى مجموعات من 20 آية
+        st.divider()
+
+        # تقسيم الآيات إلى مجموعات للقراءة
         ayahs = surah["ayahs"]
         per_page = 20
         total_pages = max(1, math.ceil(len(ayahs) / per_page))
@@ -394,8 +477,8 @@ elif st.session_state.page == "القرآن":
         end = min(start + per_page, len(ayahs))
 
         st.caption(
-            f"عرض الآيات {start + 1} إلى {end} "
-            f"من {len(ayahs)}"
+            f"الآيات من {start + 1} إلى {end} "
+            f"من أصل {len(ayahs)}"
         )
 
         for ayah in ayahs[start:end]:
@@ -431,8 +514,8 @@ elif st.session_state.page == "القرآن":
 
     except (requests.RequestException, ValueError, KeyError) as error:
         st.error(
-            "حصلت مشكلة أثناء تحميل القرآن. "
-            "اتأكد إن الإنترنت شغال وحاول تاني."
+            "تعذر تحميل القرآن الكريم. اتأكد من اتصال الإنترنت "
+            "وحاول مرة أخرى."
         )
         st.caption(f"تفاصيل الخطأ: {error}")
 
@@ -440,15 +523,19 @@ elif st.session_state.page == "القرآن":
         st.session_state.page = "الرئيسية"
         st.rerun()
 
-# ----------------------------
+
+# =====================================
 # قسم السبحة الإلكترونية
-# ----------------------------
+# =====================================
 
 elif st.session_state.page == "السبحة":
+
     st.header("🔢 السبحة الإلكترونية")
 
     st.markdown(
-        '<div class="zikr-card">سُبْحَانَ اللَّهِ وَبِحَمْدِهِ</div>',
+        '<div class="zikr-card">'
+        'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ'
+        '</div>',
         unsafe_allow_html=True,
     )
 
@@ -471,15 +558,31 @@ elif st.session_state.page == "السبحة":
             st.session_state.tasbeeh_count = 0
             st.rerun()
 
-    st.caption("تقدر تستخدم العداد للتسبيح والاستغفار.")
+    st.caption("استخدم العدّاد للتسبيح والاستغفار.")
 
     if st.button("🏠 الرئيسية", key="home_tasbeeh"):
         st.session_state.page = "الرئيسية"
         st.rerun()
 
-# ----------------------------
+
+# =====================================
 # تذييل التطبيق
-# ----------------------------
+# =====================================
 
 st.divider()
-st.caption("حصن المسلم — تقبّل الله منا ومنكم صالح الأعمال 🤍")
+
+st.markdown(
+    """
+    <div style="
+        text-align: center;
+        color: #b8860b;
+        padding: 12px;
+        font-size: 16px;
+    ">
+        حصن المسلم 🤍
+        <br>
+        تقبّل الله منا ومنكم صالح الأعمال
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
