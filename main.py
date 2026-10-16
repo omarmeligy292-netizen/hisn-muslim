@@ -78,14 +78,15 @@ div.stButton > button:hover {
 
 # -------------------- القراء --------------------
 
+
 READERS = {
     "مشاري العفاسي": "ar.alafasy",
     "محمود خليل الحصري": "ar.husary",
     "محمد صديق المنشاوي": "ar.minshawi",
-    "عبدالرحمن السديس": "ar.abdurrahmaansudais",
-    "سعود الشريم": "ar.saoodshuraym",
-    "عبدالباسط عبدالصمد": "ar.abdulbasitmurattal",
-    "أحمد العجمي": "ar.ahmedajamy",
+    "عبدالرحمن السديس": "ar.sudais",
+    "سعود الشريم": "ar.shuraim",
+    "عبدالباسط عبدالصمد": "ar.abdulbasit",
+    "أحمد العجمي": "ar.ajamy",
     "علي الحذيفي": "ar.hudhaify",
 }
 
