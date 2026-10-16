@@ -18,27 +18,27 @@ API_BASE = "https://api.alquran.cloud/v1"
 
 # ==========================================
 # العلامة المائية
+# نستخدم صورة خلفية مباشرة بدون طبقات z-index
 # ==========================================
 watermark_svg = """
 <svg xmlns="http://www.w3.org/2000/svg"
      width="500" height="220" viewBox="0 0 500 220">
-  <g fill="none" stroke="#B99746" stroke-width="4">
-    <circle cx="250" cy="55" r="30"/>
+  <g opacity="0.18" fill="#B99746">
+    <circle cx="250" cy="55" r="30"
+            fill="none" stroke="#B99746" stroke-width="4"/>
     <path d="M250 32 L257 48 L274 49 L261 60
              L265 77 L250 68 L235 77 L239 60
-             L226 49 L243 48 Z"
-          fill="#B99746" stroke="none"/>
+             L226 49 L243 48 Z"/>
+    <text x="250" y="135" text-anchor="middle"
+          font-family="Arial, sans-serif" font-size="30"
+          font-weight="bold">
+      Hisn al-Muslim
+    </text>
+    <text x="250" y="170" text-anchor="middle"
+          font-family="Arial, sans-serif" font-size="22">
+      OMAR MELIGY
+    </text>
   </g>
-  <text x="250" y="135" text-anchor="middle"
-        font-family="Arial, sans-serif" font-size="30"
-        font-weight="bold" fill="#B99746">
-    Hisn al-Muslim
-  </text>
-  <text x="250" y="170" text-anchor="middle"
-        font-family="Arial, sans-serif" font-size="22"
-        fill="#B99746">
-    OMAR MELIGY
-  </text>
 </svg>
 """
 
@@ -47,56 +47,32 @@ svg_encoded = base64.b64encode(
 ).decode("utf-8")
 
 # ==========================================
-# التصميم - بدون إخفاء محتوى التطبيق
+# تصميم التطبيق
 # ==========================================
 st.markdown(
     f"""
     <style>
+    /* الخلفية والعلامة المائية بدون pseudo-elements */
     .stApp {{
-        background: #fbf9f2 !important;
-        position: relative;
-    }}
-
-    /* العلامة المائية تظهر مرة واحدة فقط */
-    .stApp::before {{
-        content: "";
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        z-index: 0;
+        background-color: #fbf9f2 !important;
         background-image: url(
             "data:image/svg+xml;base64,{svg_encoded}"
-        );
-        background-repeat: no-repeat;
-        background-position: center center;
-        background-size: min(500px, 75vw) auto;
-        opacity: 0.18;
+        ) !important;
+        background-repeat: no-repeat !important;
+        background-position: center center !important;
+        background-size: min(500px, 75vw) auto !important;
+        background-attachment: fixed !important;
     }}
 
-    /* خلفية المحتوى شفافة لإظهار العلامة خلفه */
-    [data-testid="stAppViewContainer"] {{
-        background: transparent !important;
-    }}
-
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"],
     [data-testid="stHeader"] {{
         background: transparent !important;
-    }}
-
-    [data-testid="stMain"] {{
-        background: transparent !important;
-    }}
-
-    [data-testid="stMainBlockContainer"] {{
-        position: relative;
     }}
 
     .block-container {{
         padding-top: 1.5rem;
         padding-bottom: 3rem;
-    }}
-
-    h1, h2, h3, p, label {{
-        color: #26382d;
     }}
 
     .app-title {{
@@ -122,7 +98,6 @@ st.markdown(
         margin: 0.7rem 0 1rem 0;
     }}
 
-    /* الأزرار الدائرية */
     div.stButton > button {{
         border-radius: 50%;
         width: 105px;
@@ -150,7 +125,7 @@ st.markdown(
         line-height: 2.3;
         font-size: 1.45rem;
         color: #203c2d;
-        background: rgba(255, 255, 255, 0.92);
+        background: rgba(255, 255, 255, 0.94);
         padding: 1.3rem;
         border-radius: 14px;
         border: 1px solid #e0d4b4;
@@ -199,7 +174,7 @@ st.markdown(
 )
 
 # ==========================================
-# تحميل السور والآيات
+# بيانات القرآن
 # ==========================================
 @st.cache_data(ttl=3600)
 def get_surahs():
@@ -286,7 +261,7 @@ def render_back_button(key):
 
 
 # ==========================================
-# الصفحة الرئيسية
+# الرئيسية
 # ==========================================
 def render_home():
     render_header()
@@ -316,7 +291,7 @@ def render_home():
 
 
 # ==========================================
-# قسم الأذكار
+# الأذكار
 # ==========================================
 def render_azkar():
     render_back_button("azkar_back")
@@ -337,10 +312,7 @@ def render_azkar():
             "أصبحنا وأصبح الملك لله، والحمد لله، "
             "لا إله إلا الله وحده لا شريك له.",
         ),
-        (
-            "الاستغفار",
-            "أستغفر الله وأتوب إليه.",
-        ),
+        ("الاستغفار", "أستغفر الله وأتوب إليه."),
         (
             "التسبيح",
             "سبحان الله وبحمده، سبحان الله العظيم.",
@@ -370,7 +342,7 @@ def render_azkar():
 
 
 # ==========================================
-# قسم القرآن الكريم
+# القرآن الكريم
 # ==========================================
 def render_quran():
     render_back_button("quran_back")
@@ -384,8 +356,7 @@ def render_quran():
         surahs = get_surahs()
     except Exception:
         st.error(
-            "تعذر تحميل السور. تحقق من اتصال الإنترنت "
-            "وحاول مرة أخرى."
+            "تعذر تحميل السور. تحقق من الإنترنت وحاول مرة أخرى."
         )
         return
 
@@ -400,8 +371,8 @@ def render_quran():
         key="selected_surah",
     )
 
-    selected_index = surah_labels.index(selected_label)
-    surah = surahs[selected_index]
+    surah_index = surah_labels.index(selected_label)
+    surah = surahs[surah_index]
     surah_number = surah["number"]
 
     if st.session_state.last_surah != surah_number:
@@ -433,8 +404,7 @@ def render_quran():
     st.session_state.quran_page = current_page
 
     start = current_page * page_size
-    end = min(start + page_size, len(ayahs))
-    page_ayahs = ayahs[start:end]
+    page_ayahs = ayahs[start:start + page_size]
 
     if surah_number not in (1, 9) and start == 0:
         st.markdown(
@@ -473,10 +443,9 @@ def render_quran():
             st.rerun()
 
     with page_col:
-        page_options = list(range(1, total_pages + 1))
         selected_page = st.selectbox(
             "رقم الصفحة",
-            options=page_options,
+            options=list(range(1, total_pages + 1)),
             index=current_page,
             key="quran_page_selector",
         )
@@ -503,8 +472,7 @@ def render_quran():
         editions = []
 
     audio_editions = [
-        edition
-        for edition in editions
+        edition for edition in editions
         if edition.get("identifier")
         and edition.get("format") == "audio"
     ]
@@ -520,24 +488,23 @@ def render_quran():
         for edition in audio_editions
     ]
 
-    selected_reader_index = st.selectbox(
+    reader_index = st.selectbox(
         "اختر القارئ",
         options=list(range(len(audio_editions))),
         format_func=lambda i: reader_labels[i],
         key="quran_reader_index",
     )
 
-    reader = audio_editions[selected_reader_index]
-    reader_id = reader["identifier"]
+    reader_id = audio_editions[reader_index]["identifier"]
 
     if st.button("تشغيل التلاوة", key="play_audio"):
         try:
-            audio_response = requests.get(
+            response = requests.get(
                 f"{API_BASE}/surah/{surah_number}/{reader_id}",
                 timeout=30,
             )
-            audio_response.raise_for_status()
-            audio_result = audio_response.json()
+            response.raise_for_status()
+            audio_result = response.json()
 
             if audio_result.get("code") == 200:
                 st.audio(audio_result["data"]["audio"])
@@ -550,7 +517,7 @@ def render_quran():
 
 
 # ==========================================
-# قسم السبحة الإلكترونية
+# السبحة الإلكترونية
 # ==========================================
 def render_tasbeeh():
     render_back_button("tasbeeh_back")
@@ -575,7 +542,6 @@ def render_tasbeeh():
     )
 
     st.write("")
-
     left, middle, right = st.columns(3)
 
     with middle:
@@ -600,7 +566,7 @@ def render_tasbeeh():
 
 
 # ==========================================
-# تشغيل الصفحة الحالية
+# تشغيل الصفحة
 # ==========================================
 if st.session_state.page == "home":
     render_home()
