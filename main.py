@@ -335,7 +335,7 @@ def render_quran():
 
 
 # ==========================================
-# 4. قسم عداد التسبيح
+# 4. قسم عداد التسبيح (مُعاد كتابته بشكل مسطح لمنع خطأ المسافات)
 # ==========================================
 def render_tasbeeh():
     render_back_button("tasbeeh_back")
@@ -343,22 +343,21 @@ def render_tasbeeh():
         '<div class="section-heading">عداد التسبيح</div>', unsafe_allow_html=True
     )
 
-    _, col_center, _ = st.columns([1, 2, 1])
-    with col_center:
-        st.markdown(
-            f'<div class="tasbeeh-count">{st.session_state.tasbeeh_count}</div>',
-            unsafe_allow_html=True,
-        )
+    st.markdown(
+        f'<div class="tasbeeh-count">{st.session_state.tasbeeh_count}</div>',
+        unsafe_allow_html=True,
+    )
 
-        btn_col1, btn_col2 = st.columns(2)
-        with btn_col1:
-            if st.button("➕\nاضغط", key="click_tasbeeh"):
-                st.session_state.tasbeeh_count += 1
-                st.rerun()
-        with btn_col2:
-            if st.button("🔄\nتصفير", key="reset_tasbeeh"):
-                st.session_state.tasbeeh_count = 0
-                st.rerun()
+    _, col_center, _ = st.columns([1, 2, 1])
+    btn_col1, btn_col2 = col_center.columns(2)
+    
+    if btn_col1.button("➕\nاضغط", key="click_tasbeeh"):
+        st.session_state.tasbeeh_count += 1
+        st.rerun()
+        
+    if btn_col2.button("🔄\nتصفير", key="reset_tasbeeh"):
+        st.session_state.tasbeeh_count = 0
+        st.rerun()
 
 
 # ==========================================
@@ -370,3 +369,5 @@ elif st.session_state.page == "azkar":
     render_azkar()
 elif st.session_state.page == "quran":
     render_quran()
+elif st.session_state.page == "tasbeeh":
+    render_tasbeeh()
