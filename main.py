@@ -5,7 +5,7 @@ import html
 import base64
 
 # ==========================================
-# إعدادات التطبيق
+# إعداد التطبيق
 # ==========================================
 st.set_page_config(
     page_title="حصن المسلم",
@@ -17,7 +17,7 @@ st.set_page_config(
 API_BASE = "https://api.alquran.cloud/v1"
 
 # ==========================================
-# العلامة المائية: تظهر مرة واحدة في المنتصف
+# العلامة المائية
 # ==========================================
 watermark_svg = """
 <svg xmlns="http://www.w3.org/2000/svg"
@@ -46,15 +46,18 @@ svg_encoded = base64.b64encode(
     watermark_svg.encode("utf-8")
 ).decode("utf-8")
 
+# ==========================================
+# التصميم - بدون إخفاء محتوى التطبيق
+# ==========================================
 st.markdown(
     f"""
     <style>
     .stApp {{
-        background-color: #fbf9f2;
+        background: #fbf9f2 !important;
         position: relative;
     }}
 
-    /* علامة مائية واحدة مستقيمة في منتصف الخلفية */
+    /* العلامة المائية تظهر مرة واحدة فقط */
     .stApp::before {{
         content: "";
         position: fixed;
@@ -67,20 +70,24 @@ st.markdown(
         background-repeat: no-repeat;
         background-position: center center;
         background-size: min(500px, 75vw) auto;
-        opacity: 0.35;
+        opacity: 0.18;
     }}
 
-    /* وضع محتوى التطبيق فوق الخلفية */
+    /* خلفية المحتوى شفافة لإظهار العلامة خلفه */
     [data-testid="stAppViewContainer"] {{
-        background: transparent;
+        background: transparent !important;
     }}
 
     [data-testid="stHeader"] {{
-        background: transparent;
+        background: transparent !important;
     }}
 
     [data-testid="stMain"] {{
-        background: transparent;
+        background: transparent !important;
+    }}
+
+    [data-testid="stMainBlockContainer"] {{
+        position: relative;
     }}
 
     .block-container {{
@@ -121,7 +128,7 @@ st.markdown(
         width: 105px;
         height: 105px;
         min-width: 105px;
-        white-space: normal;
+        white-space: pre-wrap;
         font-size: 1rem;
         font-weight: bold;
         background-color: #e8dfc5;
@@ -143,7 +150,7 @@ st.markdown(
         line-height: 2.3;
         font-size: 1.45rem;
         color: #203c2d;
-        background: rgba(255, 255, 255, 0.88);
+        background: rgba(255, 255, 255, 0.92);
         padding: 1.3rem;
         border-radius: 14px;
         border: 1px solid #e0d4b4;
@@ -155,7 +162,7 @@ st.markdown(
         line-height: 2;
         font-size: 1.25rem;
         color: #203c2d;
-        background: rgba(255, 255, 255, 0.90);
+        background: rgba(255, 255, 255, 0.94);
         border: 1px solid #e0d4b4;
         border-radius: 12px;
         padding: 1rem;
@@ -192,7 +199,7 @@ st.markdown(
 )
 
 # ==========================================
-# تحميل بيانات القرآن الكريم
+# تحميل السور والآيات
 # ==========================================
 @st.cache_data(ttl=3600)
 def get_surahs():
@@ -251,6 +258,9 @@ if "tasbeeh_count" not in st.session_state:
 if "quran_page" not in st.session_state:
     st.session_state.quran_page = 0
 
+if "last_surah" not in st.session_state:
+    st.session_state.last_surah = 1
+
 
 def go_to(page):
     st.session_state.page = page
@@ -267,6 +277,12 @@ def render_header():
         "</div>",
         unsafe_allow_html=True,
     )
+
+
+def render_back_button(key):
+    if st.button("⬅️ الرئيسية", key=key):
+        go_to("home")
+        st.rerun()
 
 
 # ==========================================
@@ -303,9 +319,7 @@ def render_home():
 # قسم الأذكار
 # ==========================================
 def render_azkar():
-    if st.button("⬅️ الرئيسية", key="azkar_back"):
-        go_to("home")
-        st.rerun()
+    render_back_button("azkar_back")
 
     st.markdown(
         '<div class="section-heading">أذكار مختارة</div>',
@@ -359,9 +373,7 @@ def render_azkar():
 # قسم القرآن الكريم
 # ==========================================
 def render_quran():
-    if st.button("⬅️ الرئيسية", key="quran_back"):
-        go_to("home")
-        st.rerun()
+    render_back_button("quran_back")
 
     st.markdown(
         '<div class="section-heading">القرآن الكريم</div>',
@@ -392,8 +404,7 @@ def render_quran():
     surah = surahs[selected_index]
     surah_number = surah["number"]
 
-    # إعادة الصفحة الأولى عند تغيير السورة
-    if st.session_state.get("last_surah") != surah_number:
+    if st.session_state.last_surah != surah_number:
         st.session_state.quran_page = 0
         st.session_state.last_surah = surah_number
 
@@ -419,14 +430,13 @@ def render_quran():
         st.session_state.quran_page,
         total_pages - 1,
     )
-
     st.session_state.quran_page = current_page
 
     start = current_page * page_size
     end = min(start + page_size, len(ayahs))
     page_ayahs = ayahs[start:end]
 
-    if surah_number != 1 and surah_number != 9 and start == 0:
+    if surah_number not in (1, 9) and start == 0:
         st.markdown(
             """
             <div class="quran-text" style="text-align:center">
@@ -463,9 +473,10 @@ def render_quran():
             st.rerun()
 
     with page_col:
+        page_options = list(range(1, total_pages + 1))
         selected_page = st.selectbox(
             "رقم الصفحة",
-            options=list(range(1, total_pages + 1)),
+            options=page_options,
             index=current_page,
             key="quran_page_selector",
         )
@@ -509,14 +520,14 @@ def render_quran():
         for edition in audio_editions
     ]
 
-    selected_reader = st.selectbox(
+    selected_reader_index = st.selectbox(
         "اختر القارئ",
-        range(len(audio_editions)),
+        options=list(range(len(audio_editions))),
         format_func=lambda i: reader_labels[i],
         key="quran_reader_index",
     )
 
-    reader = audio_editions[selected_reader]
+    reader = audio_editions[selected_reader_index]
     reader_id = reader["identifier"]
 
     if st.button("تشغيل التلاوة", key="play_audio"):
@@ -529,12 +540,9 @@ def render_quran():
             audio_result = audio_response.json()
 
             if audio_result.get("code") == 200:
-                audio_url = audio_result["data"]["audio"]
-                st.audio(audio_url)
+                st.audio(audio_result["data"]["audio"])
             else:
-                st.warning(
-                    "لم يتم العثور على رابط صوتي لهذه السورة."
-                )
+                st.warning("لم يتم العثور على رابط صوتي للسورة.")
         except Exception:
             st.warning(
                 "تعذر تشغيل التلاوة الآن. حاول مرة أخرى لاحقًا."
@@ -545,9 +553,7 @@ def render_quran():
 # قسم السبحة الإلكترونية
 # ==========================================
 def render_tasbeeh():
-    if st.button("⬅️ الرئيسية", key="tasbeeh_back"):
-        go_to("home")
-        st.rerun()
+    render_back_button("tasbeeh_back")
 
     st.markdown(
         '<div class="section-heading">السبحة الإلكترونية</div>',
@@ -594,7 +600,7 @@ def render_tasbeeh():
 
 
 # ==========================================
-# تشغيل التطبيق
+# تشغيل الصفحة الحالية
 # ==========================================
 if st.session_state.page == "home":
     render_home()
