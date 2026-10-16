@@ -1,21 +1,27 @@
 
 import streamlit as st
 
+# =========================
 # إعدادات التطبيق
+# =========================
 st.set_page_config(
     page_title="حصن المسلم",
     page_icon="🌙",
     layout="centered"
 )
 
+# =========================
 # الألوان
+# =========================
 GREEN = "#123F35"
 LIGHT_GREEN = "#1C5949"
 GOLD = "#E8C878"
 CREAM = "#F7F4EA"
 WHITE = "#FFFFFF"
 
+# =========================
 # الأذكار
+# =========================
 AZKAR = {
     "أذكار الصباح": [
         (
@@ -43,7 +49,9 @@ AZKAR = {
     ],
 }
 
-# تهيئة حالة التطبيق
+# =========================
+# حالة التطبيق
+# =========================
 DEFAULTS = {
     "page": "home",
     "items": [],
@@ -57,32 +65,40 @@ for key, value in DEFAULTS.items():
     if key not in st.session_state:
         st.session_state[key] = value
 
-# تصميم التطبيق
+
+# =========================
+# التصميم
+# =========================
 st.markdown("""
 <style>
 .stApp {
     background-color: #F7F4EA;
     color: #123F35;
 }
+
 header[data-testid="stHeader"] {
     background: transparent;
 }
+
 .block-container {
-    max-width: 700px;
+    max-width: 750px;
     padding-top: 2rem;
     padding-bottom: 2rem;
 }
+
 h1 {
-    color: #E8C878 !important;
     background: #123F35;
+    color: #E8C878 !important;
+    text-align: center;
     padding: 22px 10px;
-    border-radius: 15px;
+    border-radius: 16px;
+}
+
+h2, h3 {
+    color: #123F35 !important;
     text-align: center;
 }
-h2, h3, p {
-    color: #123F35;
-    text-align: center;
-}
+
 .zikr-card {
     background: #FFFFFF;
     border: 2px solid #E8C878;
@@ -95,6 +111,7 @@ h2, h3, p {
     text-align: center;
     direction: rtl;
 }
+
 .stButton > button {
     background-color: #1C5949;
     color: #FFFFFF;
@@ -104,10 +121,13 @@ h2, h3, p {
     width: 100%;
     font-size: 18px;
 }
+
 .stButton > button:hover {
     background-color: #E8C878;
     color: #123F35;
+    border: none;
 }
+
 .counter {
     color: #123F35;
     font-size: 56px;
@@ -115,16 +135,23 @@ h2, h3, p {
     text-align: center;
     padding: 15px;
 }
+
 .footer {
     color: #1C5949;
     text-align: center;
     margin-top: 35px;
 }
+
+div[data-testid="stProgressBar"] > div {
+    background-color: #1C5949;
+}
 </style>
 """, unsafe_allow_html=True)
 
 
-# وظائف التنقل
+# =========================
+# الوظائف
+# =========================
 def home():
     st.session_state.page = "home"
     st.rerun()
@@ -143,8 +170,10 @@ def repeat_zikr():
     items = st.session_state.items
     index = st.session_state.index
 
-    # التأكد من وجود ذكر حالي
-    if not items or index < 0 or index >= len(items):
+    if not items:
+        return
+
+    if index < 0 or index >= len(items):
         return
 
     _, target = items[index]
@@ -156,14 +185,18 @@ def repeat_zikr():
         st.session_state.count += 1
 
 
+# =========================
 # عنوان التطبيق
+# =========================
 st.markdown(
     "<h1>🌙 حِصْنُ المُسْلِم</h1>",
     unsafe_allow_html=True
 )
 
 
+# =========================
 # الصفحة الرئيسية
+# =========================
 if st.session_state.page == "home":
 
     st.markdown("### أذكارك اليومية وطمأنينة قلبك")
@@ -171,7 +204,7 @@ if st.session_state.page == "home":
     for name in AZKAR:
         if st.button(
             name,
-            key=f"azkar_{name}",
+            key=f"open_{name}",
             use_container_width=True
         ):
             open_azkar(name)
@@ -190,7 +223,9 @@ if st.session_state.page == "home":
     )
 
 
+# =========================
 # صفحة الأذكار
+# =========================
 elif st.session_state.page == "azkar":
 
     items = st.session_state.items
@@ -198,22 +233,13 @@ elif st.session_state.page == "azkar":
 
     st.subheader(st.session_state.current_name)
 
-    # التحقق من صلاحية الفهرس قبل عرض الذكر
+    # التحقق من البيانات قبل عرض الذكر
     if not items:
+
         st.warning("مفيش أذكار للعرض حاليًا.")
 
-        if st.button("العودة للرئيسية"):
+        if st.button("العودة للرئيسية", key="empty_back"):
             home()
-
-    elif index >= len(items):
-
-        st.success("أحسنت! أتممت هذه الأذكار 🌿")
-
-        if st.button("العودة للرئيسية"):
-            home()
-
-        if st.button("تكرار الأذكار من البداية"):
-            open_azkar(st.session_state.current_name)
 
     elif index < 0:
 
@@ -221,7 +247,18 @@ elif st.session_state.page == "azkar":
         st.session_state.count = 0
         st.rerun()
 
+    elif index >= len(items):
+
+        st.success("أحسنت! أتممت هذه الأذكار 🌿")
+
+        if st.button("العودة للرئيسية", key="finished_back"):
+            home()
+
+        if st.button("تكرار الأذكار من البداية", key="restart_azkar"):
+            open_azkar(st.session_state.current_name)
+
     else:
+
         zikr, target = items[index]
 
         st.markdown(
@@ -256,7 +293,9 @@ elif st.session_state.page == "azkar":
             home()
 
 
+# =========================
 # صفحة السبحة الإلكترونية
+# =========================
 elif st.session_state.page == "tasbeeh":
 
     st.subheader("📿 السبحة الإلكترونية")
@@ -272,7 +311,7 @@ elif st.session_state.page == "tasbeeh":
 
     if st.button(
         "تسبيح +1",
-        key="tasbeeh_increment",
+        key="increment_tasbeeh",
         use_container_width=True
     ):
         st.session_state.tasbeeh_count += 1
@@ -280,7 +319,7 @@ elif st.session_state.page == "tasbeeh":
 
     if st.button(
         "تصفير العداد",
-        key="tasbeeh_reset",
+        key="reset_tasbeeh",
         use_container_width=True
     ):
         st.session_state.tasbeeh_count = 0
@@ -293,7 +332,9 @@ elif st.session_state.page == "tasbeeh":
         home()
 
 
-# حماية من أي صفحة غير معروفة
+# =========================
+# معالجة أي صفحة غير معروفة
+# =========================
 else:
     st.session_state.page = "home"
     st.rerun()
