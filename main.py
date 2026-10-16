@@ -17,7 +17,7 @@ st.set_page_config(
 API_BASE = "https://api.alquran.cloud/v1"
 
 # ==========================================
-# إنشاء العلامة المائية
+# العلامة المائية
 # ==========================================
 watermark_svg = """
 <svg xmlns="http://www.w3.org/2000/svg"
@@ -46,7 +46,7 @@ svg_encoded = base64.b64encode(
 ).decode("utf-8")
 
 # ==========================================
-# التصميم والخلفية
+# التصميم
 # ==========================================
 st.markdown(
     f"""
@@ -96,25 +96,33 @@ st.markdown(
         margin: 0.7rem 0 1rem 0;
     }}
 
+    /* الأزرار الدائرية */
     div.stButton > button {{
         border-radius: 50%;
         width: 105px;
         height: 105px;
         min-width: 105px;
+        padding: 0;
         white-space: pre-wrap;
-        font-size: 1rem;
+        font-size: 0.95rem;
         font-weight: bold;
         background-color: #e8dfc5;
         color: #244b36;
         border: 2px solid #b99746;
         box-shadow: 0 3px 9px rgba(0, 0, 0, 0.08);
         transition: 0.2s ease;
+        margin: 0 !important;
     }}
 
     div.stButton > button:hover {{
         background-color: #d9c99f;
         border-color: #244b36;
         color: #183625;
+    }}
+
+    /* تقليل المسافة بين أعمدة الأيقونات */
+    [data-testid="stHorizontalBlock"] {{
+        gap: 0.35rem !important;
     }}
 
     .quran-text {{
@@ -152,10 +160,10 @@ st.markdown(
 
     @media (max-width: 600px) {{
         div.stButton > button {{
-            width: 85px;
-            height: 85px;
-            min-width: 85px;
-            font-size: 0.85rem;
+            width: 82px;
+            height: 82px;
+            min-width: 82px;
+            font-size: 0.8rem;
         }}
 
         .app-title {{
@@ -177,7 +185,7 @@ st.markdown(
 )
 
 # ==========================================
-# تحميل بيانات القرآن
+# بيانات القرآن الكريم
 # ==========================================
 @st.cache_data(ttl=3600)
 def get_surahs():
@@ -264,7 +272,7 @@ def render_back_button(key):
 
 
 # ==========================================
-# الصفحة الرئيسية
+# الصفحة الرئيسية - الأيقونات متقاربة
 # ==========================================
 def render_home():
     render_header()
@@ -274,23 +282,30 @@ def render_home():
         unsafe_allow_html=True,
     )
 
-    col1, col2, col3 = st.columns(3)
+    # تجميع الأيقونات في المنتصف
+    _, center, _ = st.columns([1, 3, 1])
 
-    with col1:
-        if st.button("📿\nالأذكار", key="home_azkar"):
-            go_to("azkar")
-            st.rerun()
+    with center:
+        col1, col2, col3 = st.columns(
+            [1, 1, 1],
+            gap="small",
+        )
 
-    with col2:
-        if st.button("📖\nالقرآن الكريم", key="home_quran"):
-            go_to("quran")
-            st.session_state.quran_page = 0
-            st.rerun()
+        with col1:
+            if st.button("📿\nالأذكار", key="home_azkar"):
+                go_to("azkar")
+                st.rerun()
 
-    with col3:
-        if st.button("🔢\nالتسبيح", key="home_tasbeeh"):
-            go_to("tasbeeh")
-            st.rerun()
+        with col2:
+            if st.button("📖\nالقرآن الكريم", key="home_quran"):
+                go_to("quran")
+                st.session_state.quran_page = 0
+                st.rerun()
+
+        with col3:
+            if st.button("🔢\nالتسبيح", key="home_tasbeeh"):
+                go_to("tasbeeh")
+                st.rerun()
 
 
 # ==========================================
