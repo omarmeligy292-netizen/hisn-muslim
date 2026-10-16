@@ -17,13 +17,12 @@ st.set_page_config(
 API_BASE = "https://api.alquran.cloud/v1"
 
 # ==========================================
-# العلامة المائية
-# نستخدم صورة خلفية مباشرة بدون طبقات z-index
+# إنشاء العلامة المائية
 # ==========================================
 watermark_svg = """
 <svg xmlns="http://www.w3.org/2000/svg"
      width="500" height="220" viewBox="0 0 500 220">
-  <g opacity="0.18" fill="#B99746">
+  <g fill="#B99746">
     <circle cx="250" cy="55" r="30"
             fill="none" stroke="#B99746" stroke-width="4"/>
     <path d="M250 32 L257 48 L274 49 L261 60
@@ -47,20 +46,19 @@ svg_encoded = base64.b64encode(
 ).decode("utf-8")
 
 # ==========================================
-# تصميم التطبيق
+# التصميم والخلفية
 # ==========================================
 st.markdown(
     f"""
     <style>
-    /* الخلفية والعلامة المائية بدون pseudo-elements */
     .stApp {{
         background-color: #fbf9f2 !important;
         background-image: url(
             "data:image/svg+xml;base64,{svg_encoded}"
         ) !important;
         background-repeat: no-repeat !important;
-        background-position: center center !important;
-        background-size: min(500px, 75vw) auto !important;
+        background-position: center 65% !important;
+        background-size: 300px auto !important;
         background-attachment: fixed !important;
     }}
 
@@ -167,6 +165,11 @@ st.markdown(
         .quran-text {{
             font-size: 1.2rem;
         }}
+
+        .stApp {{
+            background-size: 240px auto !important;
+            background-position: center 70% !important;
+        }}
     }}
     </style>
     """,
@@ -174,7 +177,7 @@ st.markdown(
 )
 
 # ==========================================
-# بيانات القرآن
+# تحميل بيانات القرآن
 # ==========================================
 @st.cache_data(ttl=3600)
 def get_surahs():
@@ -183,12 +186,12 @@ def get_surahs():
         timeout=20,
     )
     response.raise_for_status()
-    result = response.json()
+    data = response.json()
 
-    if result.get("code") != 200:
-        raise ValueError("تعذر تحميل قائمة السور.")
+    if data.get("code") != 200:
+        raise ValueError("تعذر تحميل قائمة السور")
 
-    return result["data"]
+    return data["data"]
 
 
 @st.cache_data(ttl=3600)
@@ -198,12 +201,12 @@ def get_surah_text(surah_number):
         timeout=30,
     )
     response.raise_for_status()
-    result = response.json()
+    data = response.json()
 
-    if result.get("code") != 200:
-        raise ValueError("تعذر تحميل آيات السورة.")
+    if data.get("code") != 200:
+        raise ValueError("تعذر تحميل آيات السورة")
 
-    return result["data"]
+    return data["data"]
 
 
 @st.cache_data(ttl=3600)
@@ -213,12 +216,12 @@ def get_audio_editions():
         timeout=20,
     )
     response.raise_for_status()
-    result = response.json()
+    data = response.json()
 
-    if result.get("code") != 200:
+    if data.get("code") != 200:
         return []
 
-    return result.get("data", [])
+    return data.get("data", [])
 
 
 # ==========================================
@@ -261,7 +264,7 @@ def render_back_button(key):
 
 
 # ==========================================
-# الرئيسية
+# الصفحة الرئيسية
 # ==========================================
 def render_home():
     render_header()
@@ -291,7 +294,7 @@ def render_home():
 
 
 # ==========================================
-# الأذكار
+# قسم الأذكار
 # ==========================================
 def render_azkar():
     render_back_button("azkar_back")
@@ -342,7 +345,7 @@ def render_azkar():
 
 
 # ==========================================
-# القرآن الكريم
+# قسم القرآن الكريم
 # ==========================================
 def render_quran():
     render_back_button("quran_back")
@@ -406,7 +409,7 @@ def render_quran():
     start = current_page * page_size
     page_ayahs = ayahs[start:start + page_size]
 
-    if surah_number not in (1, 9) and start == 0:
+    if surah_number != 9 and start == 0:
         st.markdown(
             """
             <div class="quran-text" style="text-align:center">
@@ -517,7 +520,7 @@ def render_quran():
 
 
 # ==========================================
-# السبحة الإلكترونية
+# قسم السبحة الإلكترونية
 # ==========================================
 def render_tasbeeh():
     render_back_button("tasbeeh_back")
@@ -542,7 +545,7 @@ def render_tasbeeh():
     )
 
     st.write("")
-    left, middle, right = st.columns(3)
+    _, middle, _ = st.columns(3)
 
     with middle:
         if st.button("📿\nسبّح", key="tasbeeh_increment"):
@@ -566,7 +569,7 @@ def render_tasbeeh():
 
 
 # ==========================================
-# تشغيل الصفحة
+# تشغيل التطبيق
 # ==========================================
 if st.session_state.page == "home":
     render_home()
