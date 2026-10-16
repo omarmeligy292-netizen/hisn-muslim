@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # =====================================
-# التصميم: ذهبي وأبيض
+# التصميم الذهبي والأبيض والأزرار المدورة
 # =====================================
 
 st.markdown("""
@@ -39,8 +39,7 @@ st.markdown("""
         font-size: 38px;
         font-weight: bold;
         color: #b8860b;
-        margin-top: 10px;
-        margin-bottom: 10px;
+        margin: 12px 0;
     }
 
     .subtitle {
@@ -50,51 +49,65 @@ st.markdown("""
         margin-bottom: 25px;
     }
 
-    .gold-card {
-        background-color: #fffdf5;
-        border: 2px solid #d4af37;
-        border-radius: 16px;
-        padding: 20px;
-        margin: 12px 0;
-        text-align: center;
-        box-shadow: 0 3px 10px rgba(184, 134, 11, 0.10);
-    }
-
     .ayah-card, .zikr-card {
         background-color: #ffffff;
         color: #333333;
         padding: 22px;
         border: 1px solid #d4af37;
-        border-radius: 14px;
+        border-radius: 18px;
         margin: 12px 0;
         font-size: 23px;
         line-height: 2;
         text-align: center;
-        box-shadow: 0 3px 10px rgba(184, 134, 11, 0.08);
+        box-shadow: 0 3px 10px rgba(184, 134, 11, 0.10);
     }
 
     h1, h2, h3 {
         color: #b8860b !important;
     }
 
+    /* أزرار مدورة */
     div.stButton > button {
-        background-color: #d4af37;
+        background: linear-gradient(135deg, #d4af37, #b8860b);
         color: #ffffff;
         border: 1px solid #b8860b;
-        border-radius: 10px;
-        min-height: 44px;
+        border-radius: 50px;
+        min-height: 48px;
+        padding: 10px 24px;
         font-weight: bold;
+        transition: all 0.25s ease;
+        box-shadow: 0 4px 10px rgba(184, 134, 11, 0.18);
     }
 
     div.stButton > button:hover {
-        background-color: #b8860b;
+        background: linear-gradient(135deg, #b8860b, #9c7209);
         color: #ffffff;
-        border: 1px solid #b8860b;
+        border: 1px solid #9c7209;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(184, 134, 11, 0.28);
+    }
+
+    div.stButton > button:active {
+        transform: scale(0.97);
     }
 
     div.stButton > button:disabled {
-        background-color: #eee8d5;
+        background: #eee8d5;
         color: #888888;
+        border: 1px solid #e2d7b6;
+        box-shadow: none;
+    }
+
+    /* القوائم */
+    div[data-baseweb="select"] > div {
+        border-radius: 14px;
+        border-color: #d4af37;
+    }
+
+    /* حقول الإدخال */
+    div[data-baseweb="input"] > div {
+        border-radius: 14px;
+        border-color: #d4af37;
     }
 
     hr {
@@ -183,7 +196,7 @@ READERS = {
 
 
 # =====================================
-# حفظ حالة التطبيق
+# حالة التطبيق
 # =====================================
 
 DEFAULTS = {
@@ -202,7 +215,7 @@ for key, value in DEFAULTS.items():
 
 
 # =====================================
-# جلب بيانات القرآن الكريم
+# تحميل بيانات القرآن
 # =====================================
 
 @st.cache_data(ttl=3600)
@@ -212,7 +225,6 @@ def get_surahs():
         timeout=20,
     )
     response.raise_for_status()
-
     result = response.json()
 
     if result.get("code") != 200:
@@ -228,7 +240,6 @@ def get_surah(surah_number):
         timeout=20,
     )
     response.raise_for_status()
-
     result = response.json()
 
     if result.get("code") != 200:
@@ -257,7 +268,7 @@ st.divider()
 
 
 # =====================================
-# اختيار القارئ من الصفحة الرئيسية
+# اختيار القارئ
 # =====================================
 
 st.subheader("🎙️ اختار القارئ المفضل")
@@ -268,15 +279,13 @@ st.selectbox(
     key="reader_name",
 )
 
-st.caption(
-    f'القارئ المختار: {st.session_state.reader_name}'
-)
+st.caption(f'القارئ المختار: {st.session_state.reader_name}')
 
 st.divider()
 
 
 # =====================================
-# أزرار التنقل
+# القائمة الرئيسية
 # =====================================
 
 col1, col2, col3 = st.columns(3)
@@ -337,9 +346,7 @@ if st.session_state.page == "الأذكار":
 
         item = items[index]
 
-        st.caption(
-            f"الذكر {index + 1} من {len(items)}"
-        )
+        st.caption(f"الذكر {index + 1} من {len(items)}")
 
         st.markdown(
             f'<div class="zikr-card">{item["text"]}</div>',
@@ -369,15 +376,12 @@ if st.session_state.page == "الأذكار":
                 st.rerun()
 
         with col2:
-            if st.button(
-                "⏭️ الذكر التالي",
-                use_container_width=True,
-            ):
+            if st.button("⏭️ الذكر التالي", use_container_width=True):
                 st.session_state.zikr_index += 1
                 st.session_state.zikr_count = 0
                 st.rerun()
 
-        if st.button("إعادة عدّاد الذكر", use_container_width=True):
+        if st.button("🔄 إعادة عداد الذكر", use_container_width=True):
             st.session_state.zikr_count = 0
             st.rerun()
 
@@ -431,7 +435,7 @@ elif st.session_state.page == "القرآن":
             f'رقم السورة: {surah["number"]}'
         )
 
-        # مشغل الصوت حسب القارئ المختار
+        # صوت السورة حسب القارئ المختار
         reader_id = READERS[st.session_state.reader_name]
 
         audio_url = (
@@ -448,7 +452,7 @@ elif st.session_state.page == "القرآن":
 
         st.divider()
 
-        # تقسيم الآيات إلى مجموعات للقراءة
+        # عرض الآيات في مجموعات من 20 آية
         ayahs = surah["ayahs"]
         per_page = 20
         total_pages = max(1, math.ceil(len(ayahs) / per_page))
@@ -514,8 +518,7 @@ elif st.session_state.page == "القرآن":
 
     except (requests.RequestException, ValueError, KeyError) as error:
         st.error(
-            "تعذر تحميل القرآن الكريم. اتأكد من اتصال الإنترنت "
-            "وحاول مرة أخرى."
+            "تعذر تحميل القرآن الكريم. تأكد من اتصال الإنترنت وحاول مرة أخرى."
         )
         st.caption(f"تفاصيل الخطأ: {error}")
 
@@ -558,7 +561,7 @@ elif st.session_state.page == "السبحة":
             st.session_state.tasbeeh_count = 0
             st.rerun()
 
-    st.caption("استخدم العدّاد للتسبيح والاستغفار.")
+    st.caption("استخدم العداد للتسبيح والاستغفار.")
 
     if st.button("🏠 الرئيسية", key="home_tasbeeh"):
         st.session_state.page = "الرئيسية"
