@@ -4,7 +4,7 @@ import requests
 import streamlit as st
 
 st.set_page_config(
-    page_title="حصن المسلم",
+    page_title="Hisn al-Muslim | حصن المسلم",
     page_icon="📿",
     layout="centered",
 )
@@ -12,7 +12,7 @@ st.set_page_config(
 API = "https://api.alquran.cloud/v1"
 CDN_INFO = "https://cdn.islamic.network/quran/info/by-surah/info.json"
 
-# -------------------- التصميم --------------------
+# -------------------- التصميم والعلامة المائية --------------------
 
 st.markdown("""
 <style>
@@ -20,9 +20,34 @@ st.markdown("""
     background: linear-gradient(180deg, #fffdf5, #fff5d6);
     color: #5c4510;
 }
+
+/* العلامة المائية: شعار درع + اسم التطبيق */
+.stApp::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.25;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='250' viewBox='0 0 360 250'%3E%3Cg transform='rotate(-24 180 125)' fill='none' stroke='%23b8860b' stroke-width='2'%3E%3Cpath d='M180 45 L207 56 L204 84 Q199 104 180 115 Q161 104 156 84 L153 56 Z'/%3E%3Cpath d='M167 78 L177 88 L194 68' stroke-width='3'/%3E%3C/g%3E%3Ctext x='180' y='145' font-family='Arial,sans-serif' font-size='17' font-weight='bold' text-anchor='middle' fill='%23b8860b' transform='rotate(-24 180 145)'%3EHisn al-Muslim%3C/text%3E%3Ctext x='180' y='170' font-family='Arial,sans-serif' font-size='12' text-anchor='middle' fill='%23b8860b' transform='rotate(-24 180 170)'%3EOMAR MELIGY%3C/text%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 360px 250px;
+}
+
+/* إبقاء محتوى التطبيق فوق العلامة المائية */
+[data-testid="stAppViewContainer"],
+[data-testid="stHeader"],
+[data-testid="stBottom"],
+[data-testid="stSidebar"] {
+    position: relative;
+    z-index: 1;
+    background-color: transparent;
+}
+
 h1, h2, h3, p, label {
     color: #72520c;
 }
+
 div.stButton > button {
     width: 105px;
     height: 105px;
@@ -39,12 +64,14 @@ div.stButton > button {
     align-items: center;
     justify-content: center;
 }
+
 div.stButton > button:hover {
     border-color: #8b6914;
     color: #342400;
 }
+
 .verse {
-    background: #fffaf0;
+    background: rgba(255, 250, 240, 0.92);
     border: 1px solid #e6cf80;
     border-radius: 14px;
     padding: 16px;
@@ -54,12 +81,14 @@ div.stButton > button:hover {
     text-align: right;
     color: #46340a;
 }
+
 .counter {
     text-align: center;
     font-size: 32px;
     font-weight: bold;
     color: #b8860b;
 }
+
 @media (max-width: 600px) {
     div.stButton > button {
         width: 85px;
@@ -90,21 +119,18 @@ def get_audio_editions():
     response.raise_for_status()
 
     editions = response.json()["data"]
-    result = {}
-
-    for edition in editions:
-        if edition.get("language") == "ar":
-            result[edition["identifier"]] = edition.get(
-                "name",
-                edition["identifier"],
-            )
-
-    return result
+    return {
+        edition["identifier"]: edition.get(
+            "name", edition["identifier"]
+        )
+        for edition in editions
+        if edition.get("language") == "ar"
+    }
 
 
 @st.cache_data(ttl=3600)
 def get_surah_audio_availability():
-    """يرجع الملفات الصوتية الموجودة فعلًا لكل قارئ وسورة."""
+    """يفهرس الملفات الصوتية المتاحة حسب القارئ والسورة."""
     response = requests.get(CDN_INFO, timeout=30)
     response.raise_for_status()
     tree = response.json()
@@ -122,10 +148,12 @@ def get_surah_audio_availability():
             new_bitrate = bitrate
             new_edition = edition
 
-            if name.isdigit() and int(name) in (32, 40, 48, 64, 128, 192):
+            if name.isdigit() and int(name) in (
+                32, 40, 48, 64, 128, 192
+            ):
                 new_bitrate = int(name)
                 new_edition = None
-            elif bitrate is not None and name.startswith("ar."):
+            elif new_bitrate is not None and name.startswith("ar."):
                 new_edition = name
 
             for child in node.get("contents", []):
@@ -139,15 +167,17 @@ def get_surah_audio_availability():
                     return
 
                 if 1 <= surah_number <= 114:
-                    edition_files = availability.setdefault(edition, {})
-                    old_bitrate = edition_files.get(surah_number, 0)
+                    files = availability.setdefault(edition, {})
+                    old_bitrate = files.get(surah_number, 0)
 
-                    # اختار أعلى جودة متاحة لنفس السورة.
                     if bitrate > old_bitrate:
-                        edition_files[surah_number] = bitrate
+                        files[surah_number] = bitrate
 
-    for item in tree:
-        walk(item)
+    if isinstance(tree, list):
+        for item in tree:
+            walk(item)
+    else:
+        walk(tree)
 
     return availability
 
@@ -189,8 +219,11 @@ st.markdown(
     "<h1 style='text-align:center'>📿 حصن المسلم</h1>",
     unsafe_allow_html=True,
 )
+
 st.markdown(
-    "<p style='text-align:center'>أذكارك وقرآنك في مكان واحد</p>",
+    "<p style='text-align:center'>"
+    "أذكارك وقرآنك في مكان واحد"
+    "</p>",
     unsafe_allow_html=True,
 )
 
@@ -216,6 +249,8 @@ if st.session_state.page == "home":
         if st.button("🔢\nالمسبحة", key="home_tasbeeh"):
             st.session_state.page = "tasbeeh"
             st.rerun()
+
+    st.caption("Hisn al-Muslim • OMAR MELIGY")
 
 
 # -------------------- الأذكار --------------------
@@ -276,21 +311,19 @@ elif st.session_state.page == "quran":
             list(surah_names.keys()),
             key="quran_surah",
         )
+
         surah_number = surah_names[selected_surah]
 
-        # القراء الذين لديهم ملف للسورة المختارة فقط
-        available_readers = {}
-
-        for edition_id, surah_files in availability.items():
-            if (
-                surah_number in surah_files
-                and edition_id in editions
-            ):
-                available_readers[edition_id] = editions[edition_id]
+        available_readers = {
+            edition_id: editions[edition_id]
+            for edition_id, files in availability.items()
+            if surah_number in files and edition_id in editions
+        }
 
         st.markdown("### 🎙️ القارئ المفضل")
 
         a, b, c = st.columns([1, 1, 1])
+
         with b:
             if st.button(
                 "🎙️\nاختيار القارئ",
@@ -302,7 +335,8 @@ elif st.session_state.page == "quran":
 
         if not available_readers:
             st.warning(
-                "مش لاقيين تسجيلًا متاحًا للسورة دي في مصدر الصوت الحالي."
+                "لم يتم العثور على تسجيل متاح لهذه السورة "
+                "في مصدر الصوت الحالي."
             )
         else:
             reader_ids = list(available_readers.keys())
@@ -408,7 +442,7 @@ elif st.session_state.page == "quran":
         )
     except (KeyError, ValueError, TypeError, IndexError):
         st.error(
-            "حصل خطأ أثناء قراءة بيانات السورة أو القراء. "
+            "حصل خطأ أثناء تحميل بيانات السورة أو القراء. "
             "جرّب تحديث الصفحة."
         )
 
@@ -423,6 +457,7 @@ elif st.session_state.page == "tasbeeh":
         "<p style='text-align:center'>عدد التسبيحات</p>",
         unsafe_allow_html=True,
     )
+
     st.markdown(
         f"<div class='counter'>{st.session_state.tasbeeh_count}</div>",
         unsafe_allow_html=True,
@@ -445,3 +480,5 @@ elif st.session_state.page == "tasbeeh":
         "ولا إله إلا الله، والله أكبر</div>",
         unsafe_allow_html=True,
     )
+
+    st.caption("Hisn al-Muslim • OMAR MELIGY")
