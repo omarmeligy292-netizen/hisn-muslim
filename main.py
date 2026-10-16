@@ -1,29 +1,30 @@
-import base64
-import html
-import requests
+
 import streamlit as st
+import requests
+import html
+import base64
 
 # ==========================================
 # إعداد التطبيق
 # ==========================================
 st.set_page_config(
-    page_title="حصن المسلم - الوضع الليلي",
+    page_title="حصن المسلم",
     page_icon="📿",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-API_BASE = "https://alquran.cloud"
+API_BASE = "https://api.alquran.cloud/v1"
 
 # ==========================================
 # العلامة المائية
 # ==========================================
 watermark_svg = """
-<svg xmlns="http://w3.org"
+<svg xmlns="http://www.w3.org/2000/svg"
      width="500" height="220" viewBox="0 0 500 220">
-  <g fill="#D4AF37">
+  <g fill="#B99746">
     <circle cx="250" cy="55" r="30"
-            fill="none" stroke="#D4AF37" stroke-width="4"/>
+            fill="none" stroke="#B99746" stroke-width="4"/>
     <path d="M250 32 L257 48 L274 49 L261 60
              L265 77 L250 68 L235 77 L239 60
              L226 49 L243 48 Z"/>
@@ -40,16 +41,18 @@ watermark_svg = """
 </svg>
 """
 
-svg_encoded = base64.b64encode(watermark_svg.encode("utf-8")).decode("utf-8")
+svg_encoded = base64.b64encode(
+    watermark_svg.encode("utf-8")
+).decode("utf-8")
 
 # ==========================================
-# التصميم والـ CSS
+# التصميم
 # ==========================================
 st.markdown(
     f"""
     <style>
     .stApp {{
-        background-color: #122419 !important;
+        background-color: #fbf9f2 !important;
         background-image: url(
             "data:image/svg+xml;base64,{svg_encoded}"
         ) !important;
@@ -74,25 +77,26 @@ st.markdown(
         text-align: center;
         font-size: 2.5rem;
         font-weight: bold;
-        color: #e6c673;
+        color: #244b36;
         margin-bottom: 0.2rem;
     }}
 
     .app-subtitle {{
         text-align: center;
         font-size: 1.05rem;
-        color: #b5a476;
+        color: #78683e;
         margin-bottom: 1.5rem;
     }}
 
     .section-heading {{
         text-align: center;
-        color: #e6c673;
+        color: #244b36;
         font-size: 1.7rem;
         font-weight: bold;
         margin: 0.7rem 0 1rem 0;
     }}
 
+    /* الأزرار الدائرية */
     div.stButton > button {{
         border-radius: 50%;
         width: 105px;
@@ -102,20 +106,21 @@ st.markdown(
         white-space: pre-wrap;
         font-size: 0.95rem;
         font-weight: bold;
-        background-color: #1b3827;
-        color: #e6c673;
+        background-color: #e8dfc5;
+        color: #244b36;
         border: 2px solid #b99746;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 3px 9px rgba(0, 0, 0, 0.08);
         transition: 0.2s ease;
         margin: 0 !important;
     }}
 
     div.stButton > button:hover {{
-        background-color: #244b34;
-        border-color: #e6c673;
-        color: #fff;
+        background-color: #d9c99f;
+        border-color: #244b36;
+        color: #183625;
     }}
 
+    /* تقليل المسافة بين أعمدة الأيقونات */
     [data-testid="stHorizontalBlock"] {{
         gap: 0.35rem !important;
     }}
@@ -125,12 +130,11 @@ st.markdown(
         text-align: justify;
         line-height: 2.3;
         font-size: 1.45rem;
-        color: #e1edd9;
-        background: rgba(23, 43, 31, 0.95);
+        color: #203c2d;
+        background: rgba(255, 255, 255, 0.94);
         padding: 1.3rem;
         border-radius: 14px;
-        border: 1px solid #365c43;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        border: 1px solid #e0d4b4;
     }}
 
     .zekr-card {{
@@ -138,30 +142,20 @@ st.markdown(
         text-align: right;
         line-height: 2;
         font-size: 1.25rem;
-        color: #e1edd9;
-        background: rgba(23, 43, 31, 0.95);
-        border: 1px solid #365c43;
+        color: #203c2d;
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid #e0d4b4;
         border-radius: 12px;
         padding: 1rem;
         margin-bottom: 0.8rem;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }}
-    
-    .zekr-card strong {{
-        color: #e6c673;
     }}
 
     .tasbeeh-count {{
         text-align: center;
-        font-size: 3.5rem;
+        font-size: 3rem;
         font-weight: bold;
-        color: #e6c673;
+        color: #244b36;
         padding: 1rem;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    }}
-
-    .stSelectbox label {{
-        color: #e6c673 !important;
     }}
 
     @media (max-width: 600px) {{
@@ -195,28 +189,51 @@ st.markdown(
 # ==========================================
 @st.cache_data(ttl=3600)
 def get_surahs():
-    response = requests.get(f"{API_BASE}/surah", timeout=20)
+    response = requests.get(
+        f"{API_BASE}/surah",
+        timeout=20,
+    )
     response.raise_for_status()
     data = response.json()
+
     if data.get("code") != 200:
         raise ValueError("تعذر تحميل قائمة السور")
+
     return data["data"]
 
 
 @st.cache_data(ttl=3600)
 def get_surah_text(surah_number):
     response = requests.get(
-        f"{API_BASE}/surah/{surah_number}/quran-uthmani", timeout=30
+        f"{API_BASE}/surah/{surah_number}/quran-uthmani",
+        timeout=30,
     )
     response.raise_for_status()
     data = response.json()
+
     if data.get("code") != 200:
         raise ValueError("تعذر تحميل آيات السورة")
+
     return data["data"]
 
 
+@st.cache_data(ttl=3600)
+def get_audio_editions():
+    response = requests.get(
+        f"{API_BASE}/edition/format/audio",
+        timeout=20,
+    )
+    response.raise_for_status()
+    data = response.json()
+
+    if data.get("code") != 200:
+        return []
+
+    return data.get("data", [])
+
+
 # ==========================================
-# حالة التطبيق (Session State)
+# حالة التطبيق
 # ==========================================
 if "page" not in st.session_state:
     st.session_state.page = "home"
@@ -224,15 +241,26 @@ if "page" not in st.session_state:
 if "tasbeeh_count" not in st.session_state:
     st.session_state.tasbeeh_count = 0
 
+if "quran_page" not in st.session_state:
+    st.session_state.quran_page = 0
+
+if "last_surah" not in st.session_state:
+    st.session_state.last_surah = 1
+
 
 def go_to(page):
     st.session_state.page = page
 
 
 def render_header():
-    st.markdown('<div class="app-title">حصن المسلم</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="app-subtitle">أذكارك ووردك اليومي في مكان واحد</div>',
+        '<div class="app-title">حصن المسلم</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="app-subtitle">'
+        "أذكارك ووردك اليومي في مكان واحد"
+        "</div>",
         unsafe_allow_html=True,
     )
 
@@ -244,25 +272,36 @@ def render_back_button(key):
 
 
 # ==========================================
-# 1. الصفحة الرئيسية
+# الصفحة الرئيسية - الأيقونات متقاربة
 # ==========================================
 def render_home():
     render_header()
+
     st.markdown(
-        '<div class="section-heading">اختر القسم</div>', unsafe_allow_html=True
+        '<div class="section-heading">اختر القسم</div>',
+        unsafe_allow_html=True,
     )
 
-    _, center, _ = st.columns([1, 2, 1])
+    # تجميع الأيقونات في المنتصف
+    _, center, _ = st.columns([1, 3, 1])
+
     with center:
-        col1, col2, col3 = st.columns(3, gap="small")
+        col1, col2, col3 = st.columns(
+            [1, 1, 1],
+            gap="small",
+        )
+
         with col1:
             if st.button("📿\nالأذكار", key="home_azkar"):
                 go_to("azkar")
                 st.rerun()
+
         with col2:
-            if st.button("📖\nالقرآن", key="home_quran"):
+            if st.button("📖\nالقرآن الكريم", key="home_quran"):
                 go_to("quran")
+                st.session_state.quran_page = 0
                 st.rerun()
+
         with col3:
             if st.button("🔢\nالتسبيح", key="home_tasbeeh"):
                 go_to("tasbeeh")
@@ -270,27 +309,40 @@ def render_home():
 
 
 # ==========================================
-# 2. قسم الأذكار
+# قسم الأذكار
 # ==========================================
 def render_azkar():
     render_back_button("azkar_back")
+
     st.markdown(
-        '<div class="section-heading">أذكار مختارة</div>', unsafe_allow_html=True
+        '<div class="section-heading">أذكار مختارة</div>',
+        unsafe_allow_html=True,
     )
 
-    st.info("هذه أذكار مختارة كبداية، وليست مجموعة كاملة من الأذكار المأثورة.")
+    st.info(
+        "هذه أذكار مختارة كبداية، وليست مجموعة كاملة "
+        "من الأذكار المأثورة."
+    )
 
     azkar = [
         (
             "ذكر الصباح",
-            "أصبحنا وأصبح الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له.",
+            "أصبحنا وأصبح الملك لله، والحمد لله، "
+            "لا إله إلا الله وحده لا شريك له.",
         ),
         ("الاستغفار", "أستغفر الله وأتوب إليه."),
-        ("التسبيح", "سبحان الله وبحمده، سبحان الله العظيم."),
-        ("التوكل", "حسبي الله لا إله إلا هو عليه توكلت وهو رب العرش العظيم."),
+        (
+            "التسبيح",
+            "سبحان الله وبحمده، سبحان الله العظيم.",
+        ),
+        (
+            "التوكل",
+            "حسبي الله لا إله إلا هو عليه توكلت "
+            "وهو رب العرش العظيم.",
+        ),
         (
             "الصلاة على النبي ﷺ",
-            "اللهم صلِّ وسلم وبارك على نبينا محمد وعلى آله وصحبه أجمعين.",
+            "اللهم صل وسلم على نبينا محمد.",
         ),
     ]
 
@@ -298,7 +350,9 @@ def render_azkar():
         st.markdown(
             f"""
             <div class="zekr-card">
-                <strong>{title}:</strong><br>{text}
+                <strong>{html.escape(title)}</strong>
+                <hr>
+                {html.escape(text)}
             </div>
             """,
             unsafe_allow_html=True,
@@ -306,62 +360,231 @@ def render_azkar():
 
 
 # ==========================================
-# 3. قسم القرآن الكريم
+# قسم القرآن الكريم
 # ==========================================
 def render_quran():
     render_back_button("quran_back")
+
     st.markdown(
-        '<div class="section-heading">القرآن الكريم</div>', unsafe_allow_html=True
+        '<div class="section-heading">القرآن الكريم</div>',
+        unsafe_allow_html=True,
     )
 
     try:
         surahs = get_surahs()
-        surah_names = [f"{s['number']}. {s['name']}" for s in surahs]
-
-        selected_surah_name = st.selectbox("اختر السورة:", surah_names)
-        surah_num = int(selected_surah_name.split(".")[0])
-
-        surah_data = get_surah_text(surah_num)
-
-        ayahi_text = ""
-        for ayah in surah_data["ayahs"]:
-            ayahi_text += f"{ayah['text']} ﴿{ayah['numberInSurah']}﴾ "
-
-        st.markdown(
-            f'<div class="quran-text">{ayahi_text}</div>', unsafe_allow_html=True
+    except Exception:
+        st.error(
+            "تعذر تحميل السور. تحقق من الإنترنت وحاول مرة أخرى."
         )
-    except Exception as e:
-        st.error(f"حدث خطأ أثناء تحميل البيانات: {e}")
+        return
 
+    surah_labels = [
+        f"{surah['number']}. {surah['name']}"
+        for surah in surahs
+    ]
 
-# ==========================================
-# 4. قسم العداد الجديد (تم تغيير الاسم والصياغة بالكامل لكسر كاش السيرفر)
-# ==========================================
-def render_new_counter():
-    render_back_button("tasbeeh_back")
-    st.markdown(
-        '<div class="section-heading">عداد التسبيح</div>', unsafe_allow_html=True
+    selected_label = st.selectbox(
+        "اختر السورة",
+        surah_labels,
+        key="selected_surah",
+    )
+
+    surah_index = surah_labels.index(selected_label)
+    surah = surahs[surah_index]
+    surah_number = surah["number"]
+
+    if st.session_state.last_surah != surah_number:
+        st.session_state.quran_page = 0
+        st.session_state.last_surah = surah_number
+
+    st.caption(
+        f"عدد الآيات: {surah['numberOfAyahs']} "
+        f"• النوع: {surah['revelationType']}"
+    )
+
+    try:
+        surah_data = get_surah_text(surah_number)
+        ayahs = surah_data["ayahs"]
+    except Exception:
+        st.error("تعذر تحميل آيات السورة.")
+        return
+
+    page_size = 20
+    total_pages = max(
+        1,
+        (len(ayahs) + page_size - 1) // page_size,
+    )
+
+    current_page = min(
+        st.session_state.quran_page,
+        total_pages - 1,
+    )
+    st.session_state.quran_page = current_page
+
+    start = current_page * page_size
+    page_ayahs = ayahs[start:start + page_size]
+
+    if surah_number != 9 and start == 0:
+        st.markdown(
+            """
+            <div class="quran-text" style="text-align:center">
+                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.write("")
+
+    ayah_text = " ".join(
+        f"{ayah['text']} ﴿{ayah['numberInSurah']}﴾"
+        for ayah in page_ayahs
     )
 
     st.markdown(
-        f'<div class="tasbeeh-count">{st.session_state.tasbeeh_count}</div>',
+        f'<div class="quran-text">{html.escape(ayah_text)}</div>',
         unsafe_allow_html=True,
     )
 
-    # توزيع الأزرار بشكل عرضي بسيط جداً بدون متداخلات معقدة
-    col_left, col_right = st.columns(2)
-    
-    if col_left.button("➕ زيادة", key="btn_inc_count"):
-        st.session_state.tasbeeh_count += 1
-        st.rerun()
-        
-    if col_right.button("🔄 تصفير", key="btn_rst_count"):
-        st.session_state.tasbeeh_count = 0
-        st.rerun()
+    st.caption(
+        f"الصفحة {current_page + 1} من {total_pages}"
+    )
+
+    prev_col, page_col, next_col = st.columns([1, 2, 1])
+
+    with prev_col:
+        if st.button(
+            "السابق",
+            disabled=current_page == 0,
+            key="quran_previous",
+        ):
+            st.session_state.quran_page -= 1
+            st.rerun()
+
+    with page_col:
+        selected_page = st.selectbox(
+            "رقم الصفحة",
+            options=list(range(1, total_pages + 1)),
+            index=current_page,
+            key="quran_page_selector",
+        )
+
+        if selected_page - 1 != current_page:
+            st.session_state.quran_page = selected_page - 1
+            st.rerun()
+
+    with next_col:
+        if st.button(
+            "التالي",
+            disabled=current_page >= total_pages - 1,
+            key="quran_next",
+        ):
+            st.session_state.quran_page += 1
+            st.rerun()
+
+    st.divider()
+    st.subheader("استماع إلى السورة")
+
+    try:
+        editions = get_audio_editions()
+    except Exception:
+        editions = []
+
+    audio_editions = [
+        edition for edition in editions
+        if edition.get("identifier")
+        and edition.get("format") == "audio"
+    ]
+
+    if not audio_editions:
+        st.info("لا توجد إصدارات صوتية متاحة حاليًا.")
+        return
+
+    reader_labels = [
+        edition.get("englishName")
+        or edition.get("name")
+        or edition["identifier"]
+        for edition in audio_editions
+    ]
+
+    reader_index = st.selectbox(
+        "اختر القارئ",
+        options=list(range(len(audio_editions))),
+        format_func=lambda i: reader_labels[i],
+        key="quran_reader_index",
+    )
+
+    reader_id = audio_editions[reader_index]["identifier"]
+
+    if st.button("تشغيل التلاوة", key="play_audio"):
+        try:
+            response = requests.get(
+                f"{API_BASE}/surah/{surah_number}/{reader_id}",
+                timeout=30,
+            )
+            response.raise_for_status()
+            audio_result = response.json()
+
+            if audio_result.get("code") == 200:
+                st.audio(audio_result["data"]["audio"])
+            else:
+                st.warning("لم يتم العثور على رابط صوتي للسورة.")
+        except Exception:
+            st.warning(
+                "تعذر تشغيل التلاوة الآن. حاول مرة أخرى لاحقًا."
+            )
 
 
 # ==========================================
-# منطق توجيه الصفحات
+# قسم السبحة الإلكترونية
+# ==========================================
+def render_tasbeeh():
+    render_back_button("tasbeeh_back")
+
+    st.markdown(
+        '<div class="section-heading">السبحة الإلكترونية</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        f'<div class="tasbeeh-count">'
+        f'{st.session_state.tasbeeh_count}'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        "<div style='text-align:center'>"
+        "سبحان الله • الحمد لله • الله أكبر"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    st.write("")
+    _, middle, _ = st.columns(3)
+
+    with middle:
+        if st.button("📿\nسبّح", key="tasbeeh_increment"):
+            st.session_state.tasbeeh_count += 1
+            st.rerun()
+
+    reset_col, minus_col = st.columns(2)
+
+    with reset_col:
+        if st.button("تصفير العداد", key="tasbeeh_reset"):
+            st.session_state.tasbeeh_count = 0
+            st.rerun()
+
+    with minus_col:
+        if st.button("ناقص واحد", key="tasbeeh_decrement"):
+            st.session_state.tasbeeh_count = max(
+                0,
+                st.session_state.tasbeeh_count - 1,
+            )
+            st.rerun()
+
+
+# ==========================================
+# تشغيل التطبيق
 # ==========================================
 if st.session_state.page == "home":
     render_home()
@@ -370,4 +593,7 @@ elif st.session_state.page == "azkar":
 elif st.session_state.page == "quran":
     render_quran()
 elif st.session_state.page == "tasbeeh":
-    render_new_counter()
+    render_tasbeeh()
+else:
+    st.session_state.page = "home"
+    render_home()
